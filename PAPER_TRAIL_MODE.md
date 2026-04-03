@@ -1,6 +1,7 @@
 # SET Paper Trail Mode Documentation
 ## Pre-Live Learning Environment
-### Version: 1.0 | April 5, 2026
+### Version: 1.1 | April 3, 2026
+### Updated: Web fetch authorization added for market data access
 
 ---
 
@@ -57,6 +58,36 @@ While in Paper Trail Mode, SET learns through these channels:
 - Develop conviction framework for trade proposals
 - Evaluate trade setups against constitutional rules
 
+### 5. Web Fetch - Market Data Access ✅ AUTHORIZED
+- **Status:** **AUTHORIZED** as of 2026-04-03
+- **Authorized URLs:**
+  - Yahoo Finance: `https://finance.yahoo.com/quote/[TICKER]`
+  - MarketWatch: `https://www.marketwatch.com/investing/stock/[TICKER]`
+  - TradingView: `https://www.tradingview.com/symbols/[TICKER]/`
+- **Data Extractable:**
+  - Current price
+  - Change amount and percentage
+  - Volume
+  - Day range
+  - 52 Week range
+  - Previous close
+- **Usage:** On-demand for trade analysis when real-time data needed
+- **Protocol:**
+  1. When market data is needed for trade analysis, SET may use web_fetch to retrieve current prices
+  2. Extract price, change %, volume, and range data from fetched page
+  3. Use extracted data for:
+     - Entry zone calculations
+     - Target price determination
+     - Stop loss level calculation
+     - Percentage change from previous close
+     - Volume-based conviction assessment
+  4. All web_fetch activity must be logged and data written to T7 Archive
+  5. Data from web_fetch supplements historical Intelligence Vault data — it does not replace it
+- **Data Storage:** Write fetched data to `/Volumes/T7_Archive/FBA_Wealth_Logs/Market_Data/Fetched/[YYYY-MM-DD]_[TICKER].json`
+- **Audit Trail:** Every web_fetch call must be logged with: ticker, timestamp, URL, data extracted
+
+**Note:** This authorization does NOT change Paper Trail Mode security posture. It only enables informed analysis using publicly available market data. No trades execute, no real capital at risk.
+
 ---
 
 ## WHAT CAN BE PRACTICED IN PAPER MODE
@@ -70,6 +101,7 @@ While in Paper Trail Mode, SET learns through these channels:
 | **Proposal Format** | Write complete trade proposals using the standardized template | Verify all required fields present |
 | **Bucket Allocation** | Practice allocating hypothetical positions across FOUNDATION/GROWTH/STORM | Verify alignment with target allocations |
 | **Learning Event Structure** | Practice writing learning events for hypothetical trade outcomes | Verify all required sections present |
+| **Web Fetch Market Data** | Fetch real-time prices/dates using web_fetch for trade analysis | Verify data extracted and logged to T7 Archive |
 
 ---
 
@@ -165,6 +197,9 @@ A: Any error other than: 401 Unauthorized (Perplexity), insufficient_data (Alpac
 **Q: Can I still write to T7 Archive in Paper Mode?**
 A: YES. T7 Archive access is FULLY ENABLED in Paper Mode. This is for practicing the filing protocol.
 
+**Q: Can I use web_fetch to get market data in Paper Mode?**
+A: YES. Web fetch is AUTHORIZED in Paper Mode as of 2026-04-03. Use it to fetch current prices from Yahoo Finance, MarketWatch, and TradingView for trade analysis. This is NOT blocked like Perplexity API. Web fetch uses publicly available web pages and is fully operational.
+
 ---
 
 ## CROSS-REFERENCES
@@ -193,6 +228,14 @@ cat /Volumes/T7_Archive/FBA_Wealth_Logs/Learning/NVDA_20260405_learning.md
 
 # List all Intelligence Vault files
 ls -la /Volumes/T7_Archive/FBA_Wealth_Logs/Intelligence/Assets/
+
+# Fetch market data via web_fetch (authorized)
+web_fetch("https://finance.yahoo.com/quote/NVDA")
+web_fetch("https://www.marketwatch.com/investing/stock/NVDA")
+web_fetch("https://www.tradingview.com/symbols/NASDAQ-NVDA/")
+
+# List fetched market data
+ls -la /Volumes/T7_Archive/FBA_Wealth_Logs/Market_Data/Fetched/
 ```
 
 ---
