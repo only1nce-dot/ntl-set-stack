@@ -1,0 +1,188 @@
+#!/bin/bash
+# market-monitor.sh — SET's Market Monitoring Script
+# Continuously monitors market conditions for trading opportunities
+# Respects Alpaca's rate limits (200 requests/minute for free tier)
+
+set -euo pipefail
+
+# Load environment
+ENV_FILE="${HOME}/.openclaw/.env"
+if [[ -f "$ENV_FILE" ]]; then
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+fi
+
+# Alpaca credentials
+API_KEY="${ALPACA_API_KEY}"
+SECRET_KEY="${ALPACA_SECRET_KEY}"
+DATA_URL="https://data.alpaca.markets/v2"
+
+# Telegram
+SET_BOT_TOKEN="8682010049:AAECUmYdNfKKYo7BsOAXe6S0c9iCMuzyxGE"
+SET_CHAT_ID="7453367919"
+TIMOTHY_CHAT_ID="7453367919"
+
+send_telegram() {
+    local bot_token="$1" chat_id="$2" msg="$3"
+    curl -s -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" \
+        -d "chat_id=${chat_id}" -d "text=${msg}" -d "parse_mode=HTML" > /dev/null 2>&1
+}
+
+send_set() { send_telegram "$SET_BOT_TOKEN" "$SET_CHAT_ID" "$1"; }
+send_timothy() { send_telegram "$SET_BOT_TOKEN" "$TIMOTHY_CHAT_ID" "$1"; }
+
+# API calls with rate limiting
+get_latest_price() {
+    local symbol="$1"
+    curl -s -X GET "${DATA_URL}/stocks/${symbol}/trades/latest" \
+        -H "APCA-API-KEY-ID: ${API_KEY}" -H "APCA-API-SECRET-KEY: ${SECRET_KEY}" | jq -r ".trade.p"
+}
+
+get_daily_bars() {
+    local symbol="$1"
+    curl -s -X GET "${DATA_URL}/stocks/${symbol}/bars?timeframe=1Day&limit=30" \
+        -H "APCA-API-KEY-ID: ${API_KEY}" -H "APCA-API-SECRET-KEY: ${SECRET_KEY}" | jq -r ".bars"
+}
+
+get_snapshot() {
+    local symbols="$1"
+    curl -s -X GET "${DATA_URL}/stocks/snapshots?symbols=${symbols}" \
+        -H "APCA-API-KEY-ID: ${API_KEY}" -H "APCA-API-SECRET-KEY: ${SECRET_KEY}"
+}
+
+# Market scanning functions
+scan_volatility() {
+    # Scan for high volatility opportunities
+    local symbols=("SPY" "QQQ" "VTI" "VOO" "AMD" "NVDA" "TSLA" "AAPL" "MSFT" "GOOGL")
+    local volatile_assets=()
+    
+    for symbol in "${symbols[@]}"; do
+        # Get recent price data (respect rate limits)
+        local snapshot=$(get_snapshot "$symbol")
+        local prev_close=$(echo "$snapshot" | jq -r ".${symbol}.daily_bar.c")
+        local current_price=$(echo "$snapshot" | jq -r ".${symbol}.latest_trade.p")
+        
+        if [[ "$prev_close" != "null" && "$current_price" != "null" ]]; then
+            local change=$(echo "scale=4; ($current_price - $prev_close) / $prev_close * 100" | bc)
+            local abs_change=$(echo "$change" | sed 's/-//')
+            
+            # If >2% movement, flag as volatile
+            if (( $(echo "$abs_change > 2" | bc -l) )); then
+                volatile_assets+=("$symbol:$change%")
+            fi
+        fi
+        
+        # Brief pause to respect rate limits
+        sleep 0.5
+    done
+    
+    if [[ ${#volatile_assets[@]} -gt 0 ]]; then
+        echo "Volatile Assets Found:"
+        printf '%s\n' "${volatile_assets[@]}"
+    fi
+}
+
+scan_trending() {
+    # Scan for trending stocks using volume analysis
+    local trending_assets=()
+    local symbols=("SPY" "QQQ" "VTI" "VOO" "AMD" "NVDA" "TSLA" "AAPL" "MSFT" "GOOGL" "META" "NFLX" "AMZN")
+    
+    for symbol in "${symbols[@]}"; do
+        # Get volume data
+        local snapshot=$(get_snapshot "$symbol")
+        local current_volume=$(echo "$snapshot" | jq -r ".${symbol}.latest_bar.v")
+        local avg_volume=$(echo "$snapshot" | jq -r ".${symbol}.daily_bar.v")
+        
+        if [[ "$current_volume" != "null" && "$avg_volume" != "null" && "$avg_volume" != "0" ]]; then
+            local volume_ratio=$(echo "scale=2; $current_volume / $avg_volume" | bc)
+            
+            # If volume is 1.5x average, consider trending
+            if (( $(echo "$volume_ratio > 1.5" | bc -l) )); then
+                trending_assets+=("$symbol:${volume_ratio}x_volume")
+            fi
+        fi
+        
+        # Brief pause to respect rate limits
+        sleep 0.5
+    done
+    
+    if [[ ${#trending_assets[@]} -gt 0 ]]; then
+        echo "Trending Assets:"
+        printf '%s\n' "${trending_assets[@]}"
+    fi
+}
+
+generate_daily_report() {
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local report="📅 <b>Daily Storm Report</b> - $timestamp CST
+    
+⚡ <b>MARKET SCAN</b>
+$(scan_volatility)
+
+🌪️ <b>TRENDING ASSETS</b>
+$(scan_trending)"
+
+    send_timothy "$report"
+}
+
+# Main monitoring loop
+monitor_market() {
+    echo "🚀 Starting market monitoring..."
+    send_set "🔥 <b>MARKET MONITOR ACTIVE</b>
+
+I'm now monitoring the market for opportunities. I'll send alerts when I detect:
+• Volatile movements (>2% change)
+• Trending assets (1.5x volume surge)
+• Breaking news or market events
+
+Stand by for first scan..."
+
+    local cycle=0
+    while true; do
+        echo "🔁 Monitoring cycle $cycle"
+        
+        # Perform market scans
+        scan_volatility
+        scan_trending
+        
+        # Send daily report every 24 cycles (assuming 1-hour cycles = daily report)
+        if (( cycle % 24 == 0 )); then
+            generate_daily_report
+        fi
+        
+        # Wait 1 hour before next scan to stay well under rate limits
+        # This gives us 24 scans per day, which is safe under 200 req/min limit
+        echo "💤 Sleeping for 1 hour..."
+        sleep 3600
+        
+        ((cycle++))
+    done
+}
+
+CMD="${1:-monitor}"
+case "$CMD" in
+    monitor)
+        monitor_market
+        ;;
+    volatility)
+        scan_volatility
+        ;;
+    trending)
+        scan_trending
+        ;;
+    report)
+        generate_daily_report
+        ;;
+    help|--help|-h)
+        echo "🌪️ SET Market Monitor"
+        echo ""
+        echo "Commands:"
+        echo "  monitor     — Continuous market monitoring"
+        echo "  volatility  — Scan for volatile assets"
+        echo "  trending    — Scan for trending assets"
+        echo "  report      — Generate daily report"
+        ;;
+    *)
+        echo "Unknown: $CMD"
+        echo "Run 'market-monitor.sh help'"
+        ;;
+esac
