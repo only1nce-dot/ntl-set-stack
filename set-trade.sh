@@ -19,8 +19,6 @@ LIVE_TRADE_URL="https://api.alpaca.markets/v2"
 DATA_URL="https://data.alpaca.markets/v2"
 
 # Telegram
-ANPU_BOT_TOKEN="8741692677:AAEN1m6TpVDXorz5Zzzcp8ibI914mTWzWBQ"
-ANPU_CHAT_ID="7453367919"
 SET_BOT_TOKEN="8682010049:AAECUmYdNfKKYo7BsOAXe6S0c9iCMuzyxGE"
 SET_CHAT_ID="7453367919"
 
@@ -30,7 +28,6 @@ send_telegram() {
         -d "chat_id=${chat_id}" -d "text=${msg}" -d "parse_mode=HTML" > /dev/null 2>&1
 }
 send_set() { send_telegram "$SET_BOT_TOKEN" "$SET_CHAT_ID" "$1"; }
-send_anpu() { send_telegram "$ANPU_BOT_TOKEN" "$ANPU_CHAT_ID" "$1"; }
 
 # API calls
 get_account() {
@@ -70,6 +67,10 @@ archive_trade() {
     mkdir -p "/Volumes/T7_Archive/FBA_Wealth_Logs/Records/${month}"
     local req_id=$(echo "$data" | jq -r '.alpaca.request_id // "unknown"')
     echo "$data" > "/Volumes/T7_Archive/FBA_Wealth_Logs/Records/${month}/FBA_$(date '+%Y-%m-%d')_${req_id}.yaml"
+    
+    # Write to T7 Pending folder for Anpu to detect
+    local pending_file="/Volumes/T7_Archive/FBA_Wealth_Logs/Pending/FBA_$(date '+%Y%m%d_%H%M%S')_${req_id}.pending"
+    echo "$data" > "$pending_file"
 }
 
 CMD="${1:-help}"
@@ -149,7 +150,6 @@ archived_by: Anpu
 archived_at: $(date -u '+%Y-%m-%dT%H:%M:%S%:z')
 "
             archive_trade "$ARCHIVE"
-            send_anpu "🐊 TRADE LOGGED — ${REQUEST_ID} — BUY ${FQTY} ${SYMBOL} @ \$${FPRICE}"
             echo "✅ Archived"
         fi
         ;;
@@ -194,7 +194,6 @@ archived_by: Anpu
 archived_at: $(date -u '+%Y-%m-%dT%H:%M:%S%:z')
 "
             archive_trade "$ARCHIVE"
-            send_anpu "🐊 TRADE LOGGED — ${REQUEST_ID} — SELL ${FQTY} ${SYMBOL} @ \$${FPRICE}"
             echo "✅ Archived"
         fi
         ;;
