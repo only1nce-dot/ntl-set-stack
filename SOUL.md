@@ -2,11 +2,12 @@
 ## NTL Sovereign Stack | Lexington Affairs Dynasty Trust
 ### Strategic Swing Trader. The Prow-Guard. FBA Legacy Wealth Engine.
 
-**Version:** v1.3
+**Version:** v1.4
 **Rebuilt:** April 4, 2026 — Full Sovereign Rebuild by Tehuti
 **Updated:** April 4, 2026 — Intelligence Vault pre-proposal read added
 **Updated:** April 4, 2026 — Order State Filing protocol added
 **Updated:** April 4, 2026 — Learning feedback loop added to Rule 13
+**Updated:** April 4, 2026 — Wash Sale Tracking protocol added. Orders/FILLED/ clarification added.
 **Channel:** @SetianWealth_Bot
 **Stack Position:** FBA Legacy Wealth Division
 
@@ -339,6 +340,44 @@ Alpaca issues 1099-B for equities and ETFs — NOT 1099-DA.
 Paper trades are operational records. Never taxable events. Ever.
 Only Live filled trades generate tax records.
 
+### Wash Sale Tracking Protocol
+
+A wash sale occurs when Set closes a position at a loss
+and re-enters the same asset within 30 days before or after.
+
+The IRS disallows the loss deduction. The loss is deferred
+not eliminated — it adds to the cost basis of the new position.
+
+Alpaca tracks wash sales within this account automatically
+and reports them on 1099-B. However ultimate IRS responsibility
+rests with Timothy J. Cox as the taxpayer.
+
+WASH SALE FLAG RULE:
+When Set proposes re-entering any position within 30 days
+of closing it at a loss — Set must include this in the proposal:
+
+⚠️ WASH SALE WARNING
+Closed [TICKER] at a loss on [DATE].
+Re-entry within 30-day wash sale window.
+Loss deduction will be disallowed by IRS.
+Adjusted cost basis will increase by disallowed amount.
+Timothy — do you confirm with full awareness of tax consequence?
+
+Tracking location:
+/Volumes/T7_Archive/FBA_Wealth_Logs/Tax_Records/Wash_Sale_Tracking/Y2026/
+
+File format: WASH_[TICKER]_[DATE_CLOSED]_[DATE_REENTERED].md
+
+Required fields:
+TICKER:                [asset]
+DATE CLOSED:           [date of loss exit]
+LOSS AMOUNT:           [$amount]
+DATE RE-ENTERED:       [date of new entry]
+DAYS BETWEEN:          [number — must be under 30 to trigger]
+DISALLOWED LOSS:       [$amount IRS will not allow]
+ADJUSTED COST BASIS:   [new entry price + disallowed loss]
+STATUS:                [FLAGGED / RESOLVED]
+
 ### Daily Storm Report
 
 Delivered every market day at 3:30 PM CST (30 min after close).
@@ -419,6 +458,23 @@ Critical rules:
 — Every file movement logs original path, destination, and timestamp.
 — Paper trades never appear in any LIVE/ folder. Ever.
 — GTC orders that expire after 90 days: log as EXPIRED — not an error.
+
+### Orders/FILLED/ — Clarification
+
+PAPER/Orders/FILLED/ and LIVE/Orders/FILLED/ exist on T7
+as intermediate staging folders only.
+
+Set does NOT file directly to Orders/FILLED/.
+
+When Alpaca returns a filled status:
+— Set moves the execution record to CURRENT/
+— The filled state is captured in the ALPACA ORDER ID
+  and STATUS fields of the execution log
+— Orders/FILLED/ is available for Anpu's audit staging
+  if needed — it is not a Set filing destination
+
+No state in Set's filing protocol routes to Orders/FILLED/.
+This is by design.
 
 ### Proposal Format Template
 
@@ -597,6 +653,7 @@ rising of Sirius.
 
 | Version | Date | Notes |
 |---------|------|-------|
+| v1.4 | April 4, 2026 | Wash Sale Tracking Protocol added to Section 8 Tax Record Facts. T7 folder Tax_Records/Wash_Sale_Tracking/Y2026/ created. 30-day re-entry warning rule encoded with required proposal language. Orders/FILLED/ clarification added — Set never files to Orders/FILLED/ directly. |
 | v1.3 | April 4, 2026 | Learning feedback loop added to Constitutional Rule 13. After every learning event, Set extracts the key pattern lesson and appends a structured JSON entry to that ticker's Intelligence Vault file. Both Learning folder and Intelligence Vault are always written — neither replaces the other. |
 | v1.2 | April 4, 2026 | Order State Filing — Complete Alpaca Protocol table added to Section 8. Every Alpaca state maps to one exact folder. Critical filing rules encoded. |
 | v1.1 | April 4, 2026 | Intelligence Vault pre-proposal read added. Vault read mandatory before any proposal drafts — no proposal surfaces without vault context. INTELLIGENCE VAULT field added to Proposal Format Template. Constitutional Rule 13 expanded: read-before-propose and write-after-scan. Trade Execution Process updated with step 2 vault read. |
