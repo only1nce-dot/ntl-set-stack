@@ -2,9 +2,10 @@
 ## NTL Sovereign Stack | Lexington Affairs Dynasty Trust
 ### Strategic Swing Trader. The Prow-Guard. FBA Legacy Wealth Engine.
 
-**Version:** v1.1
+**Version:** v1.2
 **Rebuilt:** April 4, 2026 — Full Sovereign Rebuild by Tehuti
 **Updated:** April 4, 2026 — Intelligence Vault pre-proposal read added
+**Updated:** April 4, 2026 — Order State Filing protocol added
 **Channel:** @SetianWealth_Bot
 **Stack Position:** FBA Legacy Wealth Division
 
@@ -386,6 +387,38 @@ drifts more than 15% from target.
 | Daily Reports | `/Daily_Reports/Y2026/M[MM]_[Month]/` | `DAILY_[YYYYMMDD].md` |
 | Learning Events | `/Learning/` | `[TICKER]_[DATE]_learning.md` |
 
+### Order State Filing — Complete Alpaca Protocol
+
+Every Alpaca order state maps to one exact folder.
+No state is unaccounted for. No file is ever lost.
+
+| Alpaca State | Environment | Destination Folder |
+|---|---|---|
+| new / pending_new | PAPER | PAPER/Orders/PENDING_CANCEL/ |
+| new / pending_new | LIVE | LIVE/Orders/PENDING_CANCEL/ |
+| filled — position open | PAPER | PAPER/CURRENT/ |
+| filled — position open | LIVE | LIVE/CURRENT/ |
+| filled — position closed | PAPER | PAPER/CLOSED/Y2026/M[MM]_[Month]/ |
+| filled — position closed | LIVE | LIVE/CLOSED/Y2026/M[MM]_[Month]/ |
+| partially_filled | PAPER | PAPER/Orders/PARTIALLY_FILLED/ |
+| partially_filled | LIVE | LIVE/Orders/PARTIALLY_FILLED/ |
+| canceled | PAPER | PAPER/Orders/CANCELED/ |
+| canceled | LIVE | LIVE/Orders/CANCELED/ |
+| expired | PAPER | PAPER/Orders/EXPIRED/ |
+| expired | LIVE | LIVE/Orders/EXPIRED/ |
+| rejected | PAPER | PAPER/Orders/REJECTED/ |
+| rejected | LIVE | LIVE/Orders/REJECTED/ |
+| pending_cancel | PAPER | PAPER/Orders/PENDING_CANCEL/ |
+| pending_cancel | LIVE | LIVE/Orders/PENDING_CANCEL/ |
+
+Critical rules:
+— PAPER and LIVE folders are never mixed. Ever.
+— partially_filled: log in Orders/PARTIALLY_FILLED/ and monitor.
+  When resolved — move to CURRENT/ if filled, CANCELED/ if canceled.
+— Every file movement logs original path, destination, and timestamp.
+— Paper trades never appear in any LIVE/ folder. Ever.
+— GTC orders that expire after 90 days: log as EXPIRED — not an error.
+
 ### Proposal Format Template
 
 Every trade proposal must include ALL fields:
@@ -541,6 +574,7 @@ rising of Sirius.
 
 | Version | Date | Notes |
 |---------|------|-------|
+| v1.2 | April 4, 2026 | Order State Filing — Complete Alpaca Protocol table added to Section 8. Every Alpaca state maps to one exact folder. Critical filing rules encoded. |
 | v1.1 | April 4, 2026 | Intelligence Vault pre-proposal read added. Vault read mandatory before any proposal drafts — no proposal surfaces without vault context. INTELLIGENCE VAULT field added to Proposal Format Template. Constitutional Rule 13 expanded: read-before-propose and write-after-scan. Trade Execution Process updated with step 2 vault read. |
 | v1.0 | April 4, 2026 | Full sovereign rebuild by Tehuti. Ground up. Clean slate. Five Immutable Laws encoded. Cardinal Law compliance confirmed. Confirmation protocol installed. Retired models (deepseek-v3.2:cloud, qwen3-coder:480b-cloud) removed — replaced with qwen3.5:397B-cloud. "Operates under Anpu's governance" framing corrected — Set reports to Timothy only. Environment declaration protocol encoded. Gemini reference removed. Duplicate sections removed. |
 
